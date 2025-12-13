@@ -1,0 +1,88 @@
+;; ===========================================================
+;; = FICHIER : grille3.touist
+;; = Grille n°3 (6x6) — R1 + R2 + R3
+;; ===========================================================
+
+$N ;; = 6
+$L ;; = 12
+$C ;; = {B,N}
+
+;; ===========================================================
+;; = Cellules pré-remplies — Grille 3
+;; ===========================================================
+
+B(1,2)
+N(1,4)
+B(1,6)
+
+N(2,1)
+B(2,3)
+N(2,5)
+
+B(3,2)
+N(3,4)
+B(3,6)
+
+N(4,1)
+B(4,3)
+N(4,5)
+
+B(5,2)
+N(5,4)
+B(5,6)
+
+N(6,1)
+B(6,3)
+N(6,5)
+
+;; ===========================================================
+;; = R1 — Chaque cellule contient exactement un pion
+;; ===========================================================
+
+bigand $i in 1..$N, $j in 1..$N:
+    (B($i,$j) xor N($i,$j))
+
+;; ===========================================================
+;; = R1 — Interdiction des carrés 2x2 monochromes
+;; ===========================================================
+
+bigand $i in 1..$N-1, $j in 1..$N-1:
+(
+    (B($i,$j) or B($i+1,$j) or B($i,$j+1) or B($i+1,$j+1))
+    and
+    (N($i,$j) or N($i+1,$j) or N($i,$j+1) or N($i+1,$j+1))
+)
+
+;; ===========================================================
+;; = R2 & R3 — Construction des territoires
+;; ===========================================================
+
+;; = Étape 0 : une cellule de départ dans le carré 2x2
+bigand $c in $C:
+    exactly 1 of {
+        r(0,$c,1,1), r(0,$c,1,2),
+        r(0,$c,2,1), r(0,$c,2,2)
+    }
+
+bigand $c in $C, $i in 1..$N, $j in 1..$N:
+    if not(($i<=2) and ($j<=2)) then not r(0,$c,$i,$j)
+
+;; = Persistance
+bigand $c in $C, $e in 1..$L, $i in 1..$N, $j in 1..$N:
+    r($e-1,$c,$i,$j) -> r($e,$c,$i,$j)
+
+;; = Propagation par adjacence
+bigand $c in $C, $e in 1..$L, $i in 1..$N, $j in 1..$N:
+    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) ->
+    (
+        ($i>1  and r($e-1,$c,$i-1,$j)) or
+        ($i<$N and r($e-1,$c,$i+1,$j)) or
+        ($j>1  and r($e-1,$c,$i,$j-1)) or
+        ($j<$N and r($e-1,$c,$i,$j+1))
+    )
+
+;; = Toutes les cellules de chaque couleur doivent être atteintes
+bigand $i in 1..$N, $j in 1..$N:
+    (B($i,$j) -> r($L,B,$i,$j))
+    and
+    (N($i,$j) -> r($L,N,$i,$j))
