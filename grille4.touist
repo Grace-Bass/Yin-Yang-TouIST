@@ -1,0 +1,73 @@
+;; ===========================================================
+;; = FICHIER : grille4.touist
+;; = Grille n°4 (10x10) — Encodage optimisé (variables r(e,c,i,j) uniquement)
+;; ===========================================================
+
+$N = 10
+$L = 100  ;; borne supérieure (ajuster à la valeur minimale nécessaire)
+$C = {B, N}
+
+;; ===========================================================
+;; = Cellules pré-remplies — Remplissez ci-dessous les contraintes
+;; Pour fixer une cellule (i,j) à B (blanc) ou N (noir) :
+;;   - ajouter la contrainte correspondante au pas L, par exemple :
+;;       r($L,B,3,2)
+;;     signifie que la cellule (3,2) doit être blanche (dans le territoire B) à l'étape L.
+;; Laisser vide si la grille n°4 est fournie ailleurs.
+;; ===========================================================
+
+;; Exemples (à remplacer par la grille réelle) :
+;; r($L,B,1,1)
+;; r($L,N,1,2)
+
+;; ===========================================================
+;; = Étape 0 : une cellule de départ dans le carré 2x2 (par couleur)
+;; ===========================================================
+bigand $c in $C:
+    exactly 1 of {
+        r(0,$c,1,1), r(0,$c,1,2), r(0,$c,2,1), r(0,$c,2,2)
+    }
+
+bigand $c, $i, $j in $C, [1, ($N)], [1, ($N)]:
+    if not(($i<=2) and ($j<=2)) then not r(0,$c,$i,$j)
+
+;; ===========================================================
+;; = Persistance : si dans le territoire à e-1 alors reste à e
+;; ===========================================================
+bigand $c in $C, $e in [1, ($L)], $i in [1, ($N)], $j in [1, ($N)]:
+    r($e-1,$c,$i,$j) -> r($e,$c,$i,$j)
+
+;; ===========================================================
+;; = Propagation par adjacence (entrée dans le territoire)
+;; ===========================================================
+bigand $c in $C, $e in [1, ($L)], $i in [1, ($N)], $j in [1, ($N)]:
+    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) ->
+    (
+        ($i>1  and r($e-1,$c,$i-1,$j)) or
+        ($i<$N and r($e-1,$c,$i+1,$j)) or
+        ($j>1  and r($e-1,$c,$i,$j-1)) or
+        ($j<$N and r($e-1,$c,$i,$j+1))
+    )
+
+;; ===========================================================
+;; = Condition à l'étape L : coverage et exclusivité de couleur
+;; ===========================================================
+;; Chaque cellule doit être dans le territoire B ou N à l'étape L
+bigand $i in [1, ($N)], $j in [1, ($N)]:
+    r($L,B,$i,$j) or r($L,N,$i,$j)
+
+;; Optionnel : si la grille fixe une cellule, ajoutez r($L,B,i,j) ou r($L,N,i,j) plus haut.
+
+;; Interdiction des carrés 2x2 monochromes sur les territoires finaux
+bigand $i in [1, ($N-1)], $j in [1, ($N-1)]:
+    not(
+        ( r($L,B,$i,$j) and r($L,B,$i+1,$j) and r($L,B,$i,$j+1) and r($L,B,$i+1,$j+1) )
+        or
+        ( r($L,N,$i,$j) and r($L,N,$i+1,$j) and r($L,N,$i,$j+1) and r($L,N,$i+1,$j+1) )
+    )
+
+;; ===========================================================
+;; = Remarques
+;; - Ajuster la valeur de $L (ex : tester $L = 20, 30, ... ) pour trouver la borne minimale.
+;; - Remplir les contraintes en tête pour fixer les cellules pré-remplies (si connu).
+;; ===========================================================

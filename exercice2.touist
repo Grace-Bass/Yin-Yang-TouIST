@@ -3,7 +3,7 @@
 ;; = Codage de (R1) avec uniquement des variables N(i,j)
 ;; ===========================================================
 
-$N ;; = 6
+$N = 6
 
 ;; ===========================================================
 ;; = 2.1 Cellules pré-remplies (grille 1)
@@ -29,11 +29,9 @@ not N(6,6)
 ;; = 2.2 Interdiction des carrés 2x2 monochromes
 ;; ===========================================================
 
-bigand $i in 1..$N-1, $j in 1..$N-1:
-not(
-    ( N($i,$j) and N($i+1,$j)
-      and N($i,$j+1) and N($i+1,$j+1) )
-    or
-    ( not N($i,$j) and not N($i+1,$j)
-      and not N($i,$j+1) and not N($i+1,$j+1) )
-)
+bigand $i, $j in [1, ($N-1)], [1, ($N-1)]:
+    (
+        ( N($i,$j) or N($i+1,$j) or N($i,$j+1) or N($i+1,$j+1) )
+        and
+        ( not N($i,$j) or not N($i+1,$j) or not N($i,$j+1) or not N($i+1,$j+1) )
+    )
