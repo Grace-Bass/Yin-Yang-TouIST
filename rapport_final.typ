@@ -43,12 +43,12 @@ Représentation. Nous utilisons deux familles d'encodage :
 
 - Encodage A (variables explicites) : `B(i,j)` et `N(i,j)` pour chaque case (i,j). On impose
   l'exclusivité (une case est soit blanche soit noire) et on encode (R1) par des clauses
-  interdisant chaque configuration 2×2 uniforme.
+  interdisant chaque configuration $2×2$ uniforme.
 - Encodage B (optimisé) : une seule variable `N(i,j)` (vrai si noir, sinon blanc) ou,
   pour la connexité, des variables `r(e,c,i,j)` signifiant que la case (i,j) appartient au
   territoire de couleur `c` à l'étape `e` (construction inductive du territoire).
 
-Connexité. Pour (R2) et (R3) nous construisons un territoire en L étapes (`e = 0..L`,
+Connexité. Pour (R2) et (R3) nous construisons un territoire en $L$ étapes (`e = 0..L`,
 avec `L ≤ N*N`) :
 
 - étape 0 : exactement une des quatre cases du coin supérieur gauche appartient au
@@ -78,11 +78,46 @@ de la Figure 8 en ajustant la borne `L` à la valeur minimale nécessaire.
 - Connexité : coder proprement la propagation par étapes nécessite plusieurs formules
   distinctes selon la géométrie locale (coins, bords, intérieur). Solution : écrire des
   clauses séparées pour chaque cas et factoriser par fonctions de génération de clauses.
-- Explosion combinatoire (2×2 et exclusivité) : la génération brute des clauses 2×2
+- Explosion combinatoire ($2×2$ et exclusivité) : la génération brute des clauses $2×2$
   peut alourdir le solveur. Solution : passer à l'encodage optimisé et réduire les
   variables redondantes.
-- Choix de L : trop grand, le modèle devient lent ; trop petit, pas de solution. Solution :
-  tester L par incréments et observer la plus petite valeur donnant une solution.
+- Choix de $L$ : trop grand, le modèle devient lent ; trop petit, pas de solution. Solution :
+  tester $L$ par incréments et observer la plus petite valeur donnant une solution.
+
+== Difficultés induit par la syntaxe touist
+
++ Comprhension du fonctionnement des comparateurs $>$, $<$, $<=$, $=>$, $!=$ \ *Erreur* ```touist
+bigand $c, $e, $i, $j in $C, [1, ($L)], [1, ($N)], [1, ($N)]:
+    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) =>
+    (
+        (($i >= 2) then r($e-1,$c,$i-1,$j) else Bot end) or
+        (($i < $N) then r($e-1,$c,$i+1,$j) else Bot end) or
+        (($j >= 2) then r($e-1,$c,$i,$j-1) else Bot end) or
+        (($j < $N) then r($e-1,$c,$i,$j+1) else Bot end)
+    )
+end
+
+```\ *Correction* ```bigand $c, $e, $i, $j in $C, [1, ($L)], [1, ($N)], [1, ($N)]:
+    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) =>
+    (
+        (if ($i >= 2) then r($e-1,$c,$i-1,$j) else Bot end) or
+        (if ($i < $N) then r($e-1,$c,$i+1,$j) else Bot end) or
+        (if ($j >= 2) then r($e-1,$c,$i,$j-1) else Bot end) or
+        (if ($j < $N) then r($e-1,$c,$i,$j+1) else Bot end)
+    )
+end```
+
++ Intuition sur les `end` en fin \ *Erreur* ```touist
+
+bigand $i, $j in [1, ($N)], [1, ($N)]:
+    (B($i,$j) xor N($i,$j))
+
+``` \ *Correction* ```touist 
+bigand $i, $j in [1, ($N)], [1, ($N)]:
+    (B($i,$j) xor N($i,$j))
+end
+```
+
 
 = Pourquoi ces choix
 
@@ -90,14 +125,10 @@ Les encodages proposés équilibrent clarté et performance. L'encodage explicit
 facile à vérifier et pédagogique (utile pour `exercice1`/`exercice2`), tandis que l'encodage
 par territoires est pragmatique pour résoudre efficacement des instances plus grandes.
 
-= Ensemble des solutions trouvées
 
-Les solutions pour les grilles 1–4 sont disponibles sous forme de sorties TouIST dans le
-dépôt (formats `sol` / images). Elles correspondent aux configurations illustrées dans le sujet.
+= Utilisation d'IA générative 
 
-= Utilisation d'IA générative (si applicable)
-
-Nous n'avons pas eu recours à une IA générative pour écrire les modèles TouIST.
+Nous n'avons pas eu recours à une IA générative pour écrire les modèles TouIST. Car chatgpt disais n'importe quoi !
 
 = Conclusion
 
@@ -106,7 +137,4 @@ et comment optimiser un encodage pour la rendre utilisable sur des grilles non t
 Travaux futurs : automatiser la génération de clauses en FNC, tester d'autres heuristiques
 de résolution et documenter les performances sur des instances plus grandes.
 
-= Bibliographie
-
-- Manuel et site TouIST — https://www.irit.fr/TouIST
 

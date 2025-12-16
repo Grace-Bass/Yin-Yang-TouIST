@@ -4,8 +4,8 @@
 ;; ===========================================================
 
 $N = 10
-$L = 100  ;; borne supérieure (ajuster à la valeur minimale nécessaire)
-$C = {B, N}
+$L = 100  
+$C = [B, N]
 
 ;; ===========================================================
 ;; = Cellules pré-remplies — Remplissez ci-dessous les contraintes
@@ -24,47 +24,66 @@ $C = {B, N}
 ;; = Étape 0 : une cellule de départ dans le carré 2x2 (par couleur)
 ;; ===========================================================
 bigand $c in $C:
-    exactly 1 of {
-        r(0,$c,1,1), r(0,$c,1,2), r(0,$c,2,1), r(0,$c,2,2)
-    }
+    (
+        ( r(0,$c,1,1) or r(0,$c,1,2) or r(0,$c,2,1) or r(0,$c,2,2) )
+        and
+        ( not (r(0,$c,1,1) and r(0,$c,1,2)) )
+        and
+        ( not (r(0,$c,1,1) and r(0,$c,2,1)) )
+        and
+        ( not (r(0,$c,1,1) and r(0,$c,2,2)) )
+        and
+        ( not (r(0,$c,1,2) and r(0,$c,2,1)) )
+        and
+        ( not (r(0,$c,1,2) and r(0,$c,2,2)) )
+        and
+        ( not (r(0,$c,2,1) and r(0,$c,2,2)) )
+    )
+end
 
 bigand $c, $i, $j in $C, [1, ($N)], [1, ($N)]:
-    if not(($i<=2) and ($j<=2)) then not r(0,$c,$i,$j)
+    ( if ($i > 2) or ($j > 2) then not r(0,$c,$i,$j) else Top end )
+end
 
 ;; ===========================================================
 ;; = Persistance : si dans le territoire à e-1 alors reste à e
 ;; ===========================================================
-bigand $c in $C, $e in [1, ($L)], $i in [1, ($N)], $j in [1, ($N)]:
-    r($e-1,$c,$i,$j) -> r($e,$c,$i,$j)
+bigand $c,$e,$i,$j in $C,[1, ($L)],[1, ($N)],[1, ($N)]:
+    r($e-1,$c,$i,$j) => r($e,$c,$i,$j)
+end
 
 ;; ===========================================================
 ;; = Propagation par adjacence (entrée dans le territoire)
 ;; ===========================================================
-bigand $c in $C, $e in [1, ($L)], $i in [1, ($N)], $j in [1, ($N)]:
-    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) ->
+bigand $c,$e,$i,$j in $C,[1, ($L)],[1, ($N)],[1, ($N)]:
+
+    (r($e,$c,$i,$j) and not r($e-1,$c,$i,$j)) =>
     (
-        ($i>1  and r($e-1,$c,$i-1,$j)) or
-        ($i<$N and r($e-1,$c,$i+1,$j)) or
-        ($j>1  and r($e-1,$c,$i,$j-1)) or
-        ($j<$N and r($e-1,$c,$i,$j+1))
+        (if ($i >= 2) then r($e-1,$c,$i-1,$j) else Bot end) or
+        (if ($i < $N) then r($e-1,$c,$i+1,$j) else Bot end) or
+        (if ($j >= 2) then r($e-1,$c,$i,$j-1) else Bot end) or
+        (if ($j < $N) then r($e-1,$c,$i,$j+1) else Bot end)
     )
+end
 
 ;; ===========================================================
 ;; = Condition à l'étape L : coverage et exclusivité de couleur
 ;; ===========================================================
 ;; Chaque cellule doit être dans le territoire B ou N à l'étape L
-bigand $i in [1, ($N)], $j in [1, ($N)]:
+bigand $i,$j in [1, ($N)], [1, ($N)]:
     r($L,B,$i,$j) or r($L,N,$i,$j)
+end
 
 ;; Optionnel : si la grille fixe une cellule, ajoutez r($L,B,i,j) ou r($L,N,i,j) plus haut.
 
 ;; Interdiction des carrés 2x2 monochromes sur les territoires finaux
-bigand $i in [1, ($N-1)], $j in [1, ($N-1)]:
+bigand $i, $j in [1, ($N-1)], [1, ($N-1)]:
     not(
         ( r($L,B,$i,$j) and r($L,B,$i+1,$j) and r($L,B,$i,$j+1) and r($L,B,$i+1,$j+1) )
         or
         ( r($L,N,$i,$j) and r($L,N,$i+1,$j) and r($L,N,$i,$j+1) and r($L,N,$i+1,$j+1) )
     )
+end
 
 ;; ===========================================================
 ;; = Remarques
